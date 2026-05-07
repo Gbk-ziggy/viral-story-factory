@@ -1,0 +1,9 @@
+praw
+edge-tts
+moviepy
+Pillow
+requests
+python-dotenv
+mutagen
+openai
+instagrapi
