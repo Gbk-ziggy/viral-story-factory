@@ -1,28 +1,78 @@
 # Viral Story Factory 🚀
 
-An automated "Reddit-to-Vertical-Video" pipeline that transforms trending Reddit stories (or AI-generated scripts) into engaging vertical videos for TikTok, Instagram Reels, and YouTube Shorts.
+An automated pipeline to convert trending Reddit stories (or AI-generated ones) into engaging vertical videos (9:16) for TikTok, Instagram Reels, and YouTube Shorts.
 
-## Features
-- **Smart Sourcing**: Scrape top posts from Reddit (PRAW) or generate fictional stories (OpenAI).
-- **High-Quality TTS**: Integrated with `edge-tts` for natural voiceovers with word-level timing.
-- **Dynamic Visuals**: 
-  - Native-looking Reddit header overlays.
-  - Word-by-word dynamic captions (yellow text with black stroke).
-  - 9:16 vertical cropping and background looping.
-- **Auto-Posting**: Built-in support for Instagram Reels and placeholders for TikTok/YouTube Shorts.
-- **Plug-and-Play**: Automatically downloads sample background footage if none is provided.
+## Features ✨
 
-## Setup
-1. Clone the repo.
-2. Install dependencies: `pip install -r requirements.txt`.
-3. Configure `config.json` with your API keys (Reddit, OpenAI, etc.).
-4. Run: `python main.py`.
+- **Reddit Scraping**: Automatically fetches top posts from specific subreddits (e.g., r/AmItheAsshole).
+- **AI Story Generation**: Optionally uses OpenAI to generate fictional, Reddit-style stories.
+- **High-Quality TTS**: Integrated with `edge-tts` for natural-sounding voiceovers.
+- **Dynamic Captions**: Word-by-word animated captions synced with the audio.
+- **Auto-Formatting**: Background videos are automatically cropped and resized to 1080x1920.
+- **Native reddit Header**: Generates a clean, native-looking Reddit post header overlay.
+- **Multi-Platform Posting**: Supports automated uploading to Instagram Reels (via `instagrapi`) and provides placeholders for TikTok and YouTube.
+- **Robustness**: Automatically downloads sample background footage if none is provided.
 
-## Architecture
-- `src/reddit_scraper.py`: Reddit API integration.
-- `src/story_generator.py`: LLM story generation.
-- `src/tts_engine.py`: TTS and subtitle timing.
-- `src/video_generator.py`: Video assembly and captioning.
-- `src/uploader.py`: Social media publishing.
+## Project Structure 📁
 
-Made with ❤️ by team redditmaker.
+```
+viral-story-factory/
+├── assets/
+│   ├── backgrounds/    # Place your "satisfying" videos here
+│   └── fonts/          # Custom fonts (e.g., Impact, FreeSans)
+├── src/
+│   ├── reddit_scraper.py
+│   ├── tts_engine.py
+│   ├── video_generator.py
+│   ├── story_generator.py
+│   ├── uploader.py
+│   └── utils.py
+├── output/             # Generated videos and metadata
+├── main.py             # Main entry point
+├── config.json         # API keys and settings
+└── requirements.txt
+```
+
+## Installation 🛠️
+
+1. **Clone the repository**:
+   ```bash
+   git clone <repository-url>
+   cd viral-story-factory
+   ```
+
+2. **Set up a virtual environment**:
+   ```bash
+   python3 -m venv venv
+   source venv/bin/activate
+   ```
+
+3. **Install dependencies**:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. **Configure the pipeline**:
+   Edit `config.json` with your API credentials (Reddit, OpenAI, Instagram) and preferred settings.
+
+## Usage 🚀
+
+Run the pipeline end-to-end:
+```bash
+python main.py
+```
+
+Check `process.log` for logs and the `output/` folder for your finished videos!
+
+## Dependencies 📦
+
+- `praw` (Reddit API)
+- `edge-tts` (Text-to-Speech)
+- `moviepy` (Video Processing)
+- `Pillow` (Image/Overlay Generation)
+- `instagrapi` (Instagram Automation)
+- `openai` (AI Story Generation)
+- `mutagen` (Audio Metadata)
+
+## License 📄
+MIT
