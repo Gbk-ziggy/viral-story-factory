@@ -21,6 +21,11 @@
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         video { max-width: 100%; margin-top: 20px; border-radius: 8px; }
         .download-btn { display: inline-block; margin-top: 15px; padding: 10px 20px; background-color: #28a745; color: white; text-decoration: none; border-radius: 4px; }
+        .settings-section { margin-top: 20px; border: 1px solid #ddd; border-radius: 4px; overflow: hidden; }
+        .settings-header { background: #f8f9fa; padding: 10px 15px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-weight: bold; }
+        .settings-content { padding: 15px; display: none; border-top: 1px solid #ddd; }
+        .settings-content.show { display: block; }
+        .form-group small { display: block; color: #666; margin-top: 4px; font-size: 0.85em; }
     </style>
 </head>
 <body>
@@ -35,7 +40,39 @@
                 <input type="checkbox" id="ai_enabled" name="ai_enabled" checked>
                 <label for="ai_enabled">Generate story with AI instead of scraping</label>
             </div>
-            <button type="submit" id="submit-btn">Generate Video</button>
+
+            <div class="settings-section">
+                <div class="settings-header" onclick="toggleSettings()">
+                    <span>⚙️ API Configuration (Optional)</span>
+                    <span id="settings-icon">▼</span>
+                </div>
+                <div id="settings-content" class="settings-content">
+                    <p style="font-size: 0.9em; color: #555; margin-bottom: 15px;">Override default API keys. Leave blank to use environment variables.</p>
+                    
+                    <div class="form-group">
+                        <label>Reddit API</label>
+                        <input type="text" id="reddit_client_id" placeholder="Client ID" style="margin-bottom: 10px;">
+                        <input type="text" id="reddit_client_secret" placeholder="Client Secret" style="margin-bottom: 10px;">
+                        <input type="text" id="reddit_user_agent" placeholder="User Agent">
+                        <small>From <a href="https://www.reddit.com/prefs/apps" target="_blank">Reddit Apps</a></small>
+                    </div>
+
+                    <div class="form-group">
+                        <label>OpenAI API</label>
+                        <input type="text" id="openai_api_key" placeholder="sk-...">
+                        <small>Required for AI story generation.</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Instagram Login</label>
+                        <input type="text" id="instagram_username" placeholder="Username" style="margin-bottom: 10px;">
+                        <input type="text" id="instagram_password" placeholder="Password" type="password">
+                        <small>Optional: For automated posting.</small>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" id="submit-btn" style="margin-top: 20px;">Generate Video</button>
         </form>
 
         <div id="status" style="display: none;">
@@ -55,6 +92,13 @@
     </div>
 
     <script>
+        function toggleSettings() {
+            const content = document.getElementById('settings-content');
+            const icon = document.getElementById('settings-icon');
+            content.classList.toggle('show');
+            icon.innerText = content.classList.contains('show') ? '▲' : '▼';
+        }
+
         const form = document.getElementById('generator-form');
         const submitBtn = document.getElementById('submit-btn');
         const statusDiv = document.getElementById('status');
@@ -76,7 +120,13 @@
 
             const data = {
                 subreddit: document.getElementById('subreddit').value,
-                ai_enabled: document.getElementById('ai_enabled').checked
+                ai_enabled: document.getElementById('ai_enabled').checked,
+                reddit_client_id: document.getElementById('reddit_client_id').value,
+                reddit_client_secret: document.getElementById('reddit_client_secret').value,
+                reddit_user_agent: document.getElementById('reddit_user_agent').value,
+                openai_api_key: document.getElementById('openai_api_key').value,
+                instagram_username: document.getElementById('instagram_username').value,
+                instagram_password: document.getElementById('instagram_password').value
             };
 
             try {

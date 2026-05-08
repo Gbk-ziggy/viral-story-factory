@@ -14,12 +14,16 @@ os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 # In-memory task status storage
 tasks = {}
 
-def pipeline_worker(task_id, subreddit, ai_enabled):
+def pipeline_worker(task_id, subreddit, ai_enabled, overrides):
     try:
         tasks[task_id]['status'] = 'processing'
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
-        video_path = loop.run_until_complete(run_pipeline(subreddit_override=subreddit, ai_override=ai_enabled))
+        video_path = loop.run_until_complete(run_pipeline(
+            subreddit_override=subreddit, 
+            ai_override=ai_enabled,
+            **overrides
+        ))
         loop.close()
 
         if video_path and os.path.exists(video_path):
@@ -41,11 +45,23 @@ def generate():
     data = request.json
     subreddit = data.get('subreddit', 'AmItheAsshole')
     ai_enabled = data.get('ai_enabled', True)
+    
+    # Extract optional overrides
+    overrides = {
+        'reddit_client_id': data.get('reddit_client_id'),
+        'reddit_client_secret': data.get('reddit_client_secret'),
+        'reddit_user_agent': data.get('reddit_user_agent'),
+        'openai_api_key': data.get('openai_api_key'),
+        'instagram_username': data.get('instagram_username'),
+        'instagram_password': data.get('instagram_password')
+    }
+    # Remove None values
+    overrides = {k: v for k, v in overrides.items() if v}
 
     task_id = str(uuid.uuid4())
     tasks[task_id] = {'status': 'queued'}
     
-    thread = threading.Thread(target=pipeline_worker, args=(task_id, subreddit, ai_enabled))
+    thread = threading.Thread(target=pipeline_worker, args=(task_id, subreddit, ai_enabled, overrides))
     thread.start()
     
     return jsonify({'success': True, 'task_id': task_id})

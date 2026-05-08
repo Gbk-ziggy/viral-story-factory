@@ -22,7 +22,7 @@ logging.basicConfig(
     ]
 )
 
-def load_config():
+def load_config(overrides=None):
     config_path = os.path.join(os.path.dirname(__file__), 'config.json')
     if os.path.exists(config_path):
         with open(config_path, 'r') as f:
@@ -39,7 +39,7 @@ def load_config():
             },
             "voice": {"voice_name": "en-US-ChristopherNeural"},
             "ai": {"enabled": True},
-            "upload": {"instagram": {"enabled": False}, "tiktok": {"enabled": False}, "youtube": {"enabled": False}}
+            "upload": {"instagram": {"enabled": False, "username": "", "password": ""}, "tiktok": {"enabled": False}, "youtube": {"enabled": False}}
         }
     
     # Override with env vars for deployment
@@ -51,12 +51,29 @@ def load_config():
         config['reddit']['user_agent'] = os.getenv('REDDIT_USER_AGENT')
     if os.getenv('OPENAI_API_KEY'):
         config['ai']['api_key'] = os.getenv('OPENAI_API_KEY')
+
+    # Apply manual overrides (highest priority)
+    if overrides:
+        if overrides.get('reddit_client_id'):
+            config['reddit']['client_id'] = overrides['reddit_client_id']
+        if overrides.get('reddit_client_secret'):
+            config['reddit']['client_secret'] = overrides['reddit_client_secret']
+        if overrides.get('reddit_user_agent'):
+            config['reddit']['user_agent'] = overrides['reddit_user_agent']
+        if overrides.get('openai_api_key'):
+            config['ai']['api_key'] = overrides['openai_api_key']
+        if overrides.get('instagram_username'):
+            config['upload']['instagram']['username'] = overrides['instagram_username']
+            config['upload']['instagram']['enabled'] = True
+        if overrides.get('instagram_password'):
+            config['upload']['instagram']['password'] = overrides['instagram_password']
+            config['upload']['instagram']['enabled'] = True
     
     return config
 
-async def run_pipeline(subreddit_override=None, ai_override=None):
+async def run_pipeline(subreddit_override=None, ai_override=None, **overrides):
     try:
-        config = load_config()
+        config = load_config(overrides)
         if subreddit_override:
             config['settings']['subreddit'] = subreddit_override
         if ai_override is not None:
