@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Viral Story Factory</title>
+    <style>
+        body { font-family: sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; background-color: #f4f4f9; }
+        .container { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h1 { color: #333; text-align: center; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-weight: bold; }
+        input[type="text"] { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        .checkbox-group { display: flex; align-items: center; }
+        .checkbox-group input { margin-right: 10px; }
+        button { width: 100%; padding: 12px; background-color: #ff4500; color: white; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; transition: background 0.3s; }
+        button:hover { background-color: #e03d00; }
+        button:disabled { background-color: #ccc; cursor: not-allowed; }
+        #status { margin-top: 25px; padding: 15px; border-radius: 4px; background-color: #e9ecef; }
+        .spinner { border: 4px solid rgba(0, 0, 0, 0.1); width: 36px; height: 36px; border-radius: 50%; border-left-color: #ff4500; animation: spin 1s linear infinite; display: inline-block; vertical-align: middle; margin-right: 10px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        video { max-width: 100%; margin-top: 20px; border-radius: 8px; }
+        .download-btn { display: inline-block; margin-top: 15px; padding: 10px 20px; background-color: #28a745; color: white; text-decoration: none; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Viral Story Factory 🎥</h1>
+        <form id="generator-form">
+            <div class="form-group">
+                <label for="subreddit">Subreddit to Scrape</label>
+                <input type="text" id="subreddit" name="subreddit" value="AmItheAsshole" placeholder="e.g. ShortStories, LifeProTips">
+            </div>
+            <div class="form-group checkbox-group">
+                <input type="checkbox" id="ai_enabled" name="ai_enabled" checked>
+                <label for="ai_enabled">Generate story with AI instead of scraping</label>
+            </div>
+            <button type="submit" id="submit-btn">Generate Video</button>
+        </form>
+
+        <div id="status" style="display: none;">
+            <div id="loading-indicator">
+                <div class="spinner"></div>
+                <span id="status-text">Processing...</span>
+            </div>
+            <div id="error-message" style="color: #dc3545; display: none;"></div>
+        </div>
+
+        <div id="video-container" style="display: none; text-align: center;">
+            <h3>Success! Your video is ready:</h3>
+            <video id="result-video" controls></video>
+            <br>
+            <a id="download-link" class="download-btn" href="#" download>Download MP4</a>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('generator-form');
+        const submitBtn = document.getElementById('submit-btn');
+        const statusDiv = document.getElementById('status');
+        const statusText = document.getElementById('status-text');
+        const loadingIndicator = document.getElementById('loading-indicator');
+        const errorMessage = document.getElementById('error-message');
+        const videoContainer = document.getElementById('video-container');
+        const resultVideo = document.getElementById('result-video');
+        const downloadLink = document.getElementById('download-link');
+
+        form.onsubmit = async (e) => {
+            e.preventDefault();
+            submitBtn.disabled = true;
+            statusDiv.style.display = 'block';
+            loadingIndicator.style.display = 'block';
+            errorMessage.style.display = 'none';
+            statusText.innerText = 'Queuing task...';
+            videoContainer.style.display = 'none';
+
+            const data = {
+                subreddit: document.getElementById('subreddit').value,
+                ai_enabled: document.getElementById('ai_enabled').checked
+            };
+
+            try {
+                const response = await fetch('/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    pollStatus(result.task_id);
+                } else {
+                    showError(result.error || 'Failed to start generation.');
+                }
+            } catch (err) {
+                showError('Request failed: ' + err);
+            }
+        };
+
+        function pollStatus(taskId) {
+            statusText.innerText = 'Generating video... This can take 1-3 minutes.';
+            
+            const interval = setInterval(async () => {
+                try {
+                    const response = await fetch(`/status/${taskId}`);
+                    const data = await response.json();
+                    
+                    if (data.status === 'completed') {
+                        clearInterval(interval);
+                        statusDiv.style.display = 'none';
+                        resultVideo.src = data.video_url;
+                        downloadLink.href = data.video_url;
+                        videoContainer.style.display = 'block';
+                        submitBtn.disabled = false;
+                    } else if (data.status === 'failed') {
+                        clearInterval(interval);
+                        showError(data.error);
+                        submitBtn.disabled = false;
+                    }
+                } catch (err) {
+                    clearInterval(interval);
+                    showError('Status check failed: ' + err);
+                    submitBtn.disabled = false;
+                }
+            }, 3000);
+        }
+
+        function showError(msg) {
+            loadingIndicator.style.display = 'none';
+            errorMessage.style.display = 'block';
+            errorMessage.innerText = 'Error: ' + msg;
+            submitBtn.disabled = false;
+        }
+    </script>
+</body>
+</html>

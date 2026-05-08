@@ -24,13 +24,45 @@ logging.basicConfig(
 
 def load_config():
     config_path = os.path.join(os.path.dirname(__file__), 'config.json')
-    with open(config_path, 'r') as f:
-        return json.load(f)
+    if os.path.exists(config_path):
+        with open(config_path, 'r') as f:
+            config = json.load(f)
+    else:
+        config = {
+            "reddit": {},
+            "settings": {
+                "subreddit": "AmItheAsshole",
+                "max_duration_seconds": 60,
+                "background_folder": "assets/backgrounds",
+                "output_folder": "output",
+                "font_path": "/usr/share/fonts/truetype/freefont/FreeSansBold.ttf"
+            },
+            "voice": {"voice_name": "en-US-ChristopherNeural"},
+            "ai": {"enabled": True},
+            "upload": {"instagram": {"enabled": False}, "tiktok": {"enabled": False}, "youtube": {"enabled": False}}
+        }
+    
+    # Override with env vars for deployment
+    if os.getenv('REDDIT_CLIENT_ID'):
+        config['reddit']['client_id'] = os.getenv('REDDIT_CLIENT_ID')
+    if os.getenv('REDDIT_CLIENT_SECRET'):
+        config['reddit']['client_secret'] = os.getenv('REDDIT_CLIENT_SECRET')
+    if os.getenv('REDDIT_USER_AGENT'):
+        config['reddit']['user_agent'] = os.getenv('REDDIT_USER_AGENT')
+    if os.getenv('OPENAI_API_KEY'):
+        config['ai']['api_key'] = os.getenv('OPENAI_API_KEY')
+    
+    return config
 
-async def run_pipeline():
+async def run_pipeline(subreddit_override=None, ai_override=None):
     try:
         config = load_config()
-        logging.info("Starting Viral Story Factory pipeline...")
+        if subreddit_override:
+            config['settings']['subreddit'] = subreddit_override
+        if ai_override is not None:
+            config['ai']['enabled'] = ai_override
+
+        logging.info(f"Starting Viral Story Factory pipeline (Subreddit: {config['settings']['subreddit']}, AI: {config['ai']['enabled']})...")
         
         base_dir = os.path.dirname(os.path.abspath(__file__))
         output_folder = os.path.join(base_dir, config['settings']['output_folder'])
@@ -100,6 +132,8 @@ async def run_pipeline():
         # 5. Multi-Platform Upload
         uploader = Uploader(config)
         uploader.upload_all(final_path, caption)
+
+        return final_path
 
     except Exception as e:
         logging.error(f"An error occurred during pipeline execution: {e}", exc_info=True)

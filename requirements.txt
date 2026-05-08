@@ -7,3 +7,5 @@ python-dotenv
 mutagen
 openai
 instagrapi
+flask
+gunicorn
